@@ -1,34 +1,70 @@
-<script>
-const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRpIOVI52VNw3goax4z00Tj_4QnRsbE8XO5rQgKZ4O04EcwQtNd8u77HAAfoO7ZGY8F03Xtpkh6VzeP/pub?output=csv";
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Parking Status</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, Arial;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: #f4f4f5;
+      transition: 0.3s;
+    }
 
-function todayISO() {
+    .card {
+      text-align: center;
+      padding: 40px;
+      border-radius: 16px;
+      background: white;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      width: 320px;
+    }
+
+    .title {
+      font-size: 14px;
+      letter-spacing: 2px;
+      color: #666;
+      margin-bottom: 20px;
+    }
+
+    .status {
+      font-size: 64px;
+      font-weight: 800;
+    }
+
+    .yes { color: #16a34a; }
+    .no { color: #dc2626; }
+
+    .note {
+      margin-top: 10px;
+      color: #444;
+      font-size: 14px;
+      min-height: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <div class="title">PARKING TODAY</div>
+    <div id="status" class="status">...</div>
+    <div id="note" class="note"></div>
+  </div>
+
+<script>
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRpIOVI52VNw3goax4z00Tj_4QnRsbE8XO5rQgKZ4O04EcwQtNd8u77HAAfoO7ZGY8F03Xtpkh6VzeP/pub?output=csv";
+
+function today() {
   return new Date().toISOString().split("T")[0];
 }
 
-function normalizeDate(dateStr) {
-  if (!dateStr) return "";
-  if (dateStr.includes("-")) return dateStr;
-  const [m, d, y] = dateStr.split("/");
-  return `${y}-${m.padStart(2,"0")}-${d.padStart(2,"0")}`;
-}
-
-function parseCSV(csv) {
-  return csv.trim().split("\n").slice(1).map(line => {
-    const [date, parking, note] = line.split(",");
-    return {
-      date: (date || "").trim(),
-      parking: (parking || "").trim().toUpperCase(),
-      note: (note || "").trim()
-    };
-  });
-}
-
-// SAFE: render something immediately so no white screen ever happens
-function render(status, note = "") {
+function render(status, note) {
   const statusEl = document.getElementById("status");
   const noteEl = document.getElementById("note");
-
-  if (!statusEl || !noteEl) return;
 
   statusEl.textContent = status;
 
@@ -42,34 +78,42 @@ function render(status, note = "") {
     statusEl.className = "status";
   }
 
-  noteEl.textContent = note;
+  noteEl.textContent = note || "";
 }
 
 async function load() {
-  // fallback UI immediately
-  render("LOADING...", "Checking parking status...");
-
   try {
-    const res = await fetch(SHEET_CSV_URL);
-    const csv = await res.text();
+    render("LOADING", "");
 
-    const rows = parseCSV(csv);
-    const today = todayISO();
+    const res = await fetch(SHEET_URL);
+    const text = await res.text();
 
-    const match = rows.find(r => normalizeDate(r.date) === today);
+    const rows = text.trim().split("\n").slice(1);
+
+    const data = rows.map(r => {
+      const [date, parking, note] = r.split(",");
+      return { date, parking, note };
+    });
+
+    const t = today();
+
+    const match = data.find(r => r.date.trim() === t);
 
     if (!match) {
-      render("NO DATA", "No entry found for today");
+      render("NO DATA", "No entry for today");
       return;
     }
 
-    render(match.parking, match.note);
+    render(match.parking.trim(), match.note);
 
-  } catch (err) {
-    console.error(err);
-    render("ERROR", "Could not load data");
+  } catch (e) {
+    console.error(e);
+    render("ERROR", "Check console");
   }
 }
 
 load();
 </script>
+
+</body>
+</html>
