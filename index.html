@@ -105,8 +105,8 @@ function formatDate(d) {
   return d.toISOString().split("T")[0];
 }
 
-function today() {
-  return formatDate(new Date());
+function getSelectedDate() {
+  return document.getElementById("dateInput").value;
 }
 
 function render(status, note) {
@@ -151,17 +151,16 @@ function getForDate(dateStr) {
 
   render(match.parking, match.note);
 }
-
+ document.getElementById("dateInput").value = today();
+  
 async function load() {
   try {
-    document.getElementById("dateInput").value = today();
     const res = await fetch(SHEET_URL);
     const csv = await res.text();
 
     const rows = parse(csv);
-    const t = today();
-
-    const match = rows.find(r => r.date === t);
+    const selectedDate = getSelectedDate();
+    const match = rows.find(r => r.date === selectedDate);
 
     if (!match) {
       render("NO DATA", "No entry for selected date");
@@ -177,10 +176,7 @@ async function load() {
   }
 }
 
-load();
-  setInterval(() => {
-  load();
-}, 60000);
+setInterval(load, 60000);
 </script>
 
 </body>
