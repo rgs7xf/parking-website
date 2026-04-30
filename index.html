@@ -154,6 +154,7 @@ function getForDate(dateStr) {
 
 async function load() {
   try {
+    document.getElementById("dateInput").value = today();
     const res = await fetch(SHEET_URL);
     const csv = await res.text();
 
