@@ -1,0 +1,73 @@
+<script>
+const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRpIOVI52VNw3goax4z00Tj_4QnRsbE8XO5rQgKZ4O04EcwQtNd8u77HAAfoO7ZGY8F03Xtpkh6VzeP/pub?output=csv";
+
+function parseCSV(csv) {
+  const lines = csv.trim().split("\n");
+  return lines.slice(1).map(line => {
+    const parts = line.split(",");
+    return {
+      date: (parts[0] || "").trim(),
+      parking: (parts[1] || "").trim().toUpperCase(),
+      note: (parts[2] || "").trim()
+    };
+  });
+}
+
+// Normalize date formats so they match reliably
+function normalizeDate(d) {
+  // handles YYYY-MM-DD OR M/D/YYYY
+  if (d.includes("-")) return d;
+
+  const [m, day, y] = d.split("/");
+  return `${y}-${m.padStart(2,"0")}-${day.padStart(2,"0")}`;
+}
+
+function today() {
+  return new Date().toISOString().split("T")[0];
+}
+
+async function load() {
+  try {
+    const res = await fetch(SHEET_CSV_URL);
+    const csv = await res.text();
+
+    const data = parseCSV(csv);
+
+    const t = today();
+
+    const todayRow = data.find(r => {
+      return normalizeDate(r.date) === t;
+    });
+
+    const statusEl = document.getElementById("status");
+    const noteEl = document.getElementById("note");
+
+    if (!todayRow) {
+      statusEl.textContent = "NO DATA";
+      statusEl.className = "status no";
+      document.body.style.background = "#f4f4f5";
+      return;
+    }
+
+    const val = todayRow.parking;
+
+    if (val === "YES") {
+      statusEl.textContent = "YES";
+      statusEl.className = "status yes";
+      document.body.style.background = "#ecfdf5";
+    } else {
+      statusEl.textContent = "NO";
+      statusEl.className = "status no";
+      document.body.style.background = "#fef2f2";
+    }
+
+    noteEl.textContent = todayRow.note || "";
+
+  } catch (err) {
+    document.getElementById("status").textContent = "ERROR";
+    console.error(err);
+  }
+}
+
+load();
+</script>
