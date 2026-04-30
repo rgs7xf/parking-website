@@ -51,6 +51,7 @@
 <body>
   <div class="card">
     <div class="title">CAN WE PARK TODAY?</div>
+    <div id="today" class="updated"></div>
     <div id="status" class="status">...</div>
     <div id="note" class="note"></div>
   </div>
@@ -61,10 +62,20 @@ const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRpIOVI52VNw3
 function today() {
   return new Date().toISOString().split("T")[0];
 }
+  function formatToday() {
+  return new Date().toLocaleDateString(undefined, {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric"
+  });
+}
 
 function render(status, note) {
   const statusEl = document.getElementById("status");
   const noteEl = document.getElementById("note");
+  const updatedEl = document.getElementById("updated");
+  const todayEl = document.getElementById("today");
 
   statusEl.textContent = status;
 
@@ -74,11 +85,17 @@ function render(status, note) {
   } else if (status === "NO") {
     statusEl.className = "status no";
     document.body.style.background = "#fef2f2";
-  } else {
-    statusEl.className = "status";
   }
 
   noteEl.textContent = note || "";
+
+  // NEW: today display
+  if (todayEl) {
+    todayEl.textContent = "Today is " + formatToday();
+  }
+
+  // NEW: last checked timestamp
+  updatedEl.textContent = "Last checked: " + new Date().toLocaleTimeString();
 }
 
 async function load() {
