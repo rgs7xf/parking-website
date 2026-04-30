@@ -22,14 +22,25 @@
       border-radius: 20px;
       background: white;
       box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-      width: 340px;
+      width: 360px;
     }
 
     .title {
       font-size: 14px;
       letter-spacing: 2px;
       color: #666;
+      margin-bottom: 10px;
+    }
+
+    .date-picker {
       margin-bottom: 20px;
+    }
+
+    input[type="date"] {
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      font-family: inherit;
     }
 
     .status {
@@ -58,8 +69,12 @@
 <body>
   <div class="card">
 
-    <!-- BODY TITLE (your requested change) -->
     <div class="title">CAN WE PARK TODAY?</div>
+
+    <!-- NEW: date picker -->
+    <div class="date-picker">
+      <input type="date" id="dateInput"/>
+    </div>
 
     <div id="status" class="status">...</div>
     <div id="note" class="note"></div>
@@ -70,8 +85,14 @@
 <script>
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRpIOVI52VNw3goax4z00Tj_4QnRsbE8XO5rQgKZ4O04EcwQtNd8u77HAAfoO7ZGY8F03Xtpkh6VzeP/pub?output=csv";
 
+let cachedData = [];
+
+function formatDate(d) {
+  return d.toISOString().split("T")[0];
+}
+
 function today() {
-  return new Date().toISOString().split("T")[0];
+  return formatDate(new Date());
 }
 
 function render(status, note) {
@@ -87,6 +108,8 @@ function render(status, note) {
   } else if (status === "NO") {
     statusEl.className = "status no";
     document.body.style.background = "#fef2f2";
+  } else {
+    statusEl.className = "status";
   }
 
   noteEl.textContent = note || "";
@@ -96,8 +119,23 @@ function render(status, note) {
 function parse(csv) {
   return csv.trim().split("\n").slice(1).map(r => {
     const [date, parking, note] = r.split(",");
-    return { date, parking, note };
+    return {
+      date: date?.trim(),
+      parking: parking?.trim(),
+      note: note?.trim()
+    };
   });
+}
+
+function getForDate(dateStr) {
+  const match = cachedData.find(r => r.date === dateStr);
+
+  if (!match) {
+    render("NO DATA", "No entry for selected date");
+    return;
+  }
+
+  render(match.parking, match.note);
 }
 
 async function load() {
@@ -107,21 +145,22 @@ async function load() {
     const res = await fetch(SHEET_URL);
     const csv = await res.text();
 
-    const rows = parse(csv);
-    const t = today();
+    cachedData = parse(csv);
 
-    const match = rows.find(r => r.date.trim() === t);
+    const dateInput = document.getElementById("dateInput");
 
-    if (!match) {
-      render("NO DATA", "No entry for today");
-      return;
-    }
+    // default to today
+    dateInput.value = today();
 
-    render(match.parking.trim(), match.note);
+    getForDate(dateInput.value);
+
+    dateInput.addEventListener("change", (e) => {
+      getForDate(e.target.value);
+    });
 
   } catch (e) {
     console.error(e);
-    render("ERROR", "Check connection or sheet");
+    render("ERROR", "Could not load data");
   }
 }
 
