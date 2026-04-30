@@ -29,11 +29,11 @@
       font-size: 14px;
       letter-spacing: 2px;
       color: #666;
-      margin-bottom: 10px;
+      margin-bottom: 6px;
     }
 
     .date-picker {
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
 
     input[type="date"] {
@@ -43,16 +43,24 @@
       font-family: inherit;
     }
 
-    .status {
-      font-size: 72px;
-      font-weight: 800;
-    }
+.status {
+  font-size: 96px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  transition: opacity 0.3s ease;
+}
 
-    .yes { color: #16a34a; }
-    .no { color: #dc2626; }
+.yes { color: #15803d; }
+.no { color: #b91c1c; }
 
+    .divider {
+  width: 60%;
+  height: 1px;
+  background: #e5e7eb;
+  margin: 10px auto 18px auto;
+}
     .note {
-      margin-top: 10px;
+      margin-top: 8px;
       color: #444;
       font-size: 14px;
       min-height: 20px;
@@ -65,7 +73,7 @@
     }
     
     .disclaimer {
-  font-size: 8px;
+  font-size: 10px;
   color: #999;
   text-align: center;
   margin-top: 10px;
@@ -79,7 +87,7 @@
 
     <div class="card">
       <div class="title">CAN WE PARK TODAY?</div>
-
+      <div class="divider"></div>
       <div class="date-picker">
         <input type="date" id="dateInput"/>
       </div>
@@ -118,10 +126,10 @@ function render(status, note) {
 
   if (status === "YES") {
     statusEl.className = "status yes";
-    document.body.style.background = "#ecfdf5";
+    document.body.style.background = "rgba(22, 163, 74, 0.08)";
   } else if (status === "NO") {
     statusEl.className = "status no";
-    document.body.style.background = "#fef2f2";
+    document.body.style.background = "rgba(220, 38, 38, 0.08)";
   } else {
     statusEl.className = "status";
   }
@@ -145,7 +153,7 @@ function getForDate(dateStr) {
   const match = cachedData.find(r => r.date === dateStr);
 
   if (!match) {
-    render("NO DATA", "No entry for selected date");
+    render("NO DATA", "Do you really need to know this far in advance? =P");
     return;
   }
 
@@ -154,7 +162,7 @@ function getForDate(dateStr) {
 
 async function load() {
   try {
-    render("LOADING", "");
+    render(". . .", "");
 
     const res = await fetch(SHEET_URL);
     const csv = await res.text();
