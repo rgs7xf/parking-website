@@ -2,7 +2,9 @@
 <html>
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Can We Park Today?</title>
+
   <style>
     body {
       margin: 0;
@@ -12,16 +14,15 @@
       justify-content: center;
       height: 100vh;
       background: #f4f4f5;
-      transition: 0.3s;
     }
 
     .card {
       text-align: center;
-      padding: 40px;
-      border-radius: 16px;
+      padding: 48px 40px;
+      border-radius: 20px;
       background: white;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-      width: 320px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      width: 340px;
     }
 
     .title {
@@ -32,7 +33,7 @@
     }
 
     .status {
-      font-size: 64px;
+      font-size: 72px;
       font-weight: 800;
     }
 
@@ -45,15 +46,25 @@
       font-size: 14px;
       min-height: 20px;
     }
+
+    .updated {
+      margin-top: 18px;
+      font-size: 11px;
+      color: #999;
+    }
   </style>
 </head>
 
 <body>
   <div class="card">
+
+    <!-- BODY TITLE (your requested change) -->
     <div class="title">CAN WE PARK TODAY?</div>
-    <div id="today" class="updated"></div>
+
     <div id="status" class="status">...</div>
     <div id="note" class="note"></div>
+    <div id="updated" class="updated"></div>
+
   </div>
 
 <script>
@@ -62,20 +73,11 @@ const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRpIOVI52VNw3
 function today() {
   return new Date().toISOString().split("T")[0];
 }
-  function formatToday() {
-  return new Date().toLocaleDateString(undefined, {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric"
-  });
-}
 
 function render(status, note) {
   const statusEl = document.getElementById("status");
   const noteEl = document.getElementById("note");
   const updatedEl = document.getElementById("updated");
-  const todayEl = document.getElementById("today");
 
   statusEl.textContent = status;
 
@@ -88,13 +90,14 @@ function render(status, note) {
   }
 
   noteEl.textContent = note || "";
-
-if (todayEl) {
-  todayEl.textContent = "Today is " + formatToday();
+  updatedEl.textContent = "Last checked: " + new Date().toLocaleTimeString();
 }
 
-if (updatedEl) {
-  updatedEl.textContent = "Last checked: " + new Date().toLocaleTimeString();
+function parse(csv) {
+  return csv.trim().split("\n").slice(1).map(r => {
+    const [date, parking, note] = r.split(",");
+    return { date, parking, note };
+  });
 }
 
 async function load() {
@@ -102,18 +105,12 @@ async function load() {
     render("LOADING", "");
 
     const res = await fetch(SHEET_URL);
-    const text = await res.text();
+    const csv = await res.text();
 
-    const rows = text.trim().split("\n").slice(1);
-
-    const data = rows.map(r => {
-      const [date, parking, note] = r.split(",");
-      return { date, parking, note };
-    });
-
+    const rows = parse(csv);
     const t = today();
 
-    const match = data.find(r => r.date.trim() === t);
+    const match = rows.find(r => r.date.trim() === t);
 
     if (!match) {
       render("NO DATA", "No entry for today");
@@ -124,7 +121,7 @@ async function load() {
 
   } catch (e) {
     console.error(e);
-    render("ERROR", "Check console");
+    render("ERROR", "Check connection or sheet");
   }
 }
 
