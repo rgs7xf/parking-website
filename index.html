@@ -154,7 +154,34 @@ function getForDate(dateStr) {
 
 async function load() {
   try {
-    render("LOADING", "");
+    const res = await fetch(SHEET_URL);
+    const csv = await res.text();
+
+    const rows = parse(csv);
+    const t = today();
+
+    const match = rows.find(r => r.date === t);
+
+    if (!match) {
+      render("NO DATA", "No entry for selected date");
+      return;
+    }
+
+    const newStatus = match.parking.trim();
+    const newNote = match.note;
+
+    // Only re-render if something changed
+    const statusEl = document.getElementById("status");
+
+    if (statusEl.textContent !== newStatus) {
+      render(newStatus, newNote);
+    }
+
+  } catch (e) {
+    console.error(e);
+    // no UI interruption on refresh failure
+  }
+}
 
     const res = await fetch(SHEET_URL);
     const csv = await res.text();
