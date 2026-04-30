@@ -65,7 +65,7 @@
     }
     
     .disclaimer {
-  font-size: 10px;
+  font-size: 8px;
   color: #999;
   text-align: center;
   margin-top: 10px;
@@ -105,8 +105,8 @@ function formatDate(d) {
   return d.toISOString().split("T")[0];
 }
 
-function getSelectedDate() {
-  return document.getElementById("dateInput").value;
+function today() {
+  return formatDate(new Date());
 }
 
 function render(status, note) {
@@ -151,32 +151,34 @@ function getForDate(dateStr) {
 
   render(match.parking, match.note);
 }
- document.getElementById("dateInput").value = today();
-  
+
 async function load() {
   try {
+    render("LOADING", "");
+
     const res = await fetch(SHEET_URL);
     const csv = await res.text();
 
-    const rows = parse(csv);
-    const selectedDate = getSelectedDate();
-    const match = rows.find(r => r.date === selectedDate);
+    cachedData = parse(csv);
 
-    if (!match) {
-      render("NO DATA", "No entry for selected date");
-      return;
-    }
+    const dateInput = document.getElementById("dateInput");
 
-    render(match.parking.trim(), match.note);
+    // default to today
+    dateInput.value = today();
+
+    getForDate(dateInput.value);
+
+    dateInput.addEventListener("change", (e) => {
+      getForDate(e.target.value);
+    });
 
   } catch (e) {
     console.error(e);
-    // IMPORTANT: do NOT render ERROR during auto-refresh
-    // keeps UI stable
+    render("ERROR", "Could not load data");
   }
 }
 
-setInterval(load, 60000);
+load();
 </script>
 
 </body>
