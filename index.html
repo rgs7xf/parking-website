@@ -79,6 +79,33 @@
   margin-top: 10px;
   padding: 0 10px;
 }
+    .weather-toggle {
+  margin-top: 20px;
+  font-size: 14px;
+  color: #2563eb;
+  cursor: pointer;
+  text-align: center;
+  transition: opacity 0.2s ease;
+}
+
+.weather-toggle:hover {
+   text-decoration: underline;
+  opacity: 0.7;
+}
+
+.weather-content {
+  max-width: 420px;
+  margin: 10px auto 0;
+  font-size: 13px;
+  color: #444;
+  text-align: center;
+  line-height: 1.5;
+
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.4s ease, opacity 0.3s ease;
+}
   </style>
 </head>
 
@@ -100,6 +127,14 @@
     <div class="disclaimer">
       *This website does not guarantee parking. Choosing a future date increases the chance of errors.*
     </div>
+    
+    <div class="weather-toggle" onclick="toggleWeather()">
+  ☔🥸 Weatherman Ross Here 🥸☔
+</div>
+
+<div id="weatherContent" class="weather-content">
+  (Loading weather thoughts...)
+</div>
 
   </div>
 </body>
@@ -139,27 +174,71 @@ function render(status, note) {
 }
 
 function parse(csv) {
-  return csv.trim().split("\n").slice(1).map(r => {
-    const [date, parking, note] = r.split(",");
+  return csv.trim().split("\n").slice(1).map(row => {
+    const cols = [];
+    let current = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < row.length; i++) {
+      const char = row[i];
+
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        cols.push(current);
+        current = "";
+      } else {
+        current += char;
+      }
+    }
+
+    cols.push(current);
+
+    const [date, parking, note, weather] = cols;
+
     return {
       date: date?.trim(),
       parking: parking?.trim(),
-      note: note?.trim()
+      note: note?.trim(),
+      weather: weather?.trim()
     };
   });
 }
 
 function getForDate(dateStr) {
   const match = cachedData.find(r => r.date === dateStr);
+  const weatherEl = document.getElementById("weatherContent");
+
+  // 👇 reset weather visibility on date change
+  weatherEl.style.maxHeight = "0px";
+  weatherEl.style.opacity = "0";
 
   if (!match) {
     render("NO DATA", "Do you really need to know this far in advance? =P");
+    weatherEl.textContent = "No weather update.";
     return;
   }
 
   render(match.parking, match.note);
-}
 
+  if (match.weather) {
+    weatherEl.textContent = match.weather;
+  } else {
+    weatherEl.textContent = "No weather update today.";
+  }
+}
+  
+function toggleWeather() {
+  const el = document.getElementById("weatherContent");
+
+  if (el.style.maxHeight && el.style.maxHeight !== "0px") {
+    el.style.maxHeight = "0px";
+    el.style.opacity = "0";
+  } else {
+    el.style.maxHeight = "200px"; // enough space for your text
+    el.style.opacity = "1";
+  }
+}
 async function load() {
   try {
     render(". . .", "");
@@ -181,11 +260,10 @@ async function load() {
     });
 
   } catch (e) {
-    console.error(e);
-    render("ERROR", "Could not load data");
-  }
+  console.error(e);
+  // Do nothing — keep last known state
 }
-
+}
 load();
 </script>
 
