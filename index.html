@@ -89,12 +89,11 @@ function render(status, note) {
 
   noteEl.textContent = note || "";
 
-  // NEW: today display
-  if (todayEl) {
-    todayEl.textContent = "Today is " + formatToday();
-  }
+if (todayEl) {
+  todayEl.textContent = "Today is " + formatToday();
+}
 
-  // NEW: last checked timestamp
+if (updatedEl) {
   updatedEl.textContent = "Last checked: " + new Date().toLocaleTimeString();
 }
 
