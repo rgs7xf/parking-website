@@ -167,41 +167,12 @@ async function load() {
       return;
     }
 
-    const newStatus = match.parking.trim();
-    const newNote = match.note;
-
-    // Only re-render if something changed
-    const statusEl = document.getElementById("status");
-
-    if (statusEl.textContent !== newStatus) {
-      render(newStatus, newNote);
-    }
+    render(match.parking.trim(), match.note);
 
   } catch (e) {
     console.error(e);
-    // no UI interruption on refresh failure
-  }
-}
-
-    const res = await fetch(SHEET_URL);
-    const csv = await res.text();
-
-    cachedData = parse(csv);
-
-    const dateInput = document.getElementById("dateInput");
-
-    // default to today
-    dateInput.value = today();
-
-    getForDate(dateInput.value);
-
-    dateInput.addEventListener("change", (e) => {
-      getForDate(e.target.value);
-    });
-
-  } catch (e) {
-    console.error(e);
-    render("ERROR", "Could not load data");
+    // IMPORTANT: do NOT render ERROR during auto-refresh
+    // keeps UI stable
   }
 }
 
