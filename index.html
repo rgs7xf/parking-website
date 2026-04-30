@@ -75,23 +75,26 @@
 </head>
 
 <body>
-  <div class="card">
+  <div class="container">
 
-    <div class="title">CAN WE PARK TODAY?</div>
+    <div class="card">
+      <div class="title">CAN WE PARK TODAY?</div>
 
-    <!-- NEW: date picker -->
-    <div class="date-picker">
-      <input type="date" id="dateInput"/>
+      <div class="date-picker">
+        <input type="date" id="dateInput"/>
+      </div>
+
+      <div id="status" class="status">...</div>
+      <div id="note" class="note"></div>
+      <div id="updated" class="updated"></div>
     </div>
 
-    <div id="status" class="status">...</div>
-    <div id="note" class="note"></div>
-    <div id="updated" class="updated"></div>
-  
-</div>
-  <div class="disclaimer">
-  *This website does not guarantee parking. Choosing a future date increases the chance of errors.*
+    <div class="disclaimer">
+      *This website does not guarantee parking. Choosing a future date increases the chance of errors.*
+    </div>
+
   </div>
+</body>
 
 <script>
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRpIOVI52VNw3goax4z00Tj_4QnRsbE8XO5rQgKZ4O04EcwQtNd8u77HAAfoO7ZGY8F03Xtpkh6VzeP/pub?output=csv";
