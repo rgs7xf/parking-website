@@ -116,7 +116,7 @@
   <div class="container">
 
     <div class="card">
-      <div class="title">CAN WE PARK TODAY?</div>
+     <div id="title" class="title">CAN WE PARK TODAY?</div>
       <div class="divider"></div>
       <div class="date-picker">
         <input type="date" id="dateInput"/>
@@ -154,7 +154,36 @@ function formatDate(d) {
 }
 
 function today() {
-  return formatDate(new Date());
+  const d = new Date();
+  return d.toLocaleDateString("en-CA"); // ISO-safe local format
+}
+  
+function updateTitle(dateStr) {
+  const titleEl = document.getElementById("title");
+
+  // Get today in the SAME format as input (YYYY-MM-DD)
+  const todayStr = today();
+
+  // Convert both to "day numbers" safely (no timezone issues)
+  const todayParts = todayStr.split("-");
+  const selectedParts = dateStr.split("-");
+
+  const todayDate = new Date(todayParts[0], todayParts[1] - 1, todayParts[2]);
+  const selectedDate = new Date(selectedParts[0], selectedParts[1] - 1, selectedParts[2]);
+
+  const diffDays = Math.round((selectedDate - todayDate) / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) {
+    titleEl.textContent = "CAN WE PARK TODAY?";
+  } else if (diffDays === 1) {
+    titleEl.textContent = "CAN WE PARK TOMORROW?";
+  } else if (diffDays === 2) {
+    titleEl.textContent = "CAN WE PARK THE DAY AFTER TOMORROW?";
+  } else if (diffDays > 2) {
+    titleEl.textContent = "CAN WE PARK ON A FUTURE DATE?";
+  } else {
+    titleEl.textContent = "COULD WE PARK IN THE PAST?";
+  }
 }
   
 function render(status, note) {
@@ -288,7 +317,7 @@ if (cached && cachedTime && (Date.now() - cachedTime < FIVE_MIN)) {
 
   const dateInput = document.getElementById("dateInput");
   dateInput.value = today();
-
+  updateTitle(dateInput.value);
   getForDate(dateInput.value);
 
   console.log("Loaded from short-term cache");
@@ -303,11 +332,12 @@ if (cached && cachedTime && (Date.now() - cachedTime < FIVE_MIN)) {
 
     const dateInput = document.getElementById("dateInput");
 
-    dateInput.value = today();
-
-    getForDate(dateInput.value);
+   dateInput.value = today();
+updateTitle(dateInput.value);
+getForDate(dateInput.value);
 
     dateInput.addEventListener("change", (e) => {
+      updateTitle(e.target.value);
       getForDate(e.target.value);
     });
     
@@ -321,8 +351,9 @@ if (cached && cachedTime && (Date.now() - cachedTime < FIVE_MIN)) {
 
     const dateInput = document.getElementById("dateInput");
 
-    dateInput.value = today();
-    getForDate(dateInput.value);
+  dateInput.value = today();
+updateTitle(dateInput.value);
+getForDate(dateInput.value);
     console.log("Loaded from cache");
   } else {
     render("ERROR", "Could not load data.");
