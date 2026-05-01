@@ -137,7 +137,6 @@
 </div>
 
   </div>
-</body>
 
 <script>
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRpIOVI52VNw3goax4z00Tj_4QnRsbE8XO5rQgKZ4O04EcwQtNd8u77HAAfoO7ZGY8F03Xtpkh6VzeP/pub?output=csv";
@@ -145,7 +144,10 @@ const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRpIOVI52VNw3
 let cachedData = [];
 
 function formatDate(d) {
-  return d.toISOString().split("T")[0];
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function today() {
@@ -235,7 +237,7 @@ function toggleWeather() {
     el.style.maxHeight = "0px";
     el.style.opacity = "0";
   } else {
-    el.style.maxHeight = "200px"; // enough space for your text
+    el.style.maxHeight = el.scrollHeight + "px";
     el.style.opacity = "1";
   }
 }
