@@ -31,7 +31,22 @@
       color: #666;
       margin-bottom: 6px;
     }
+    
+   .today-label {
+  font-size: 12px;
+  color: #888;
+  margin-top: 4px;
 
+  opacity: 0;
+  animation: fadeIn 0.4s ease forwards;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
+    
     .date-picker {
       margin-bottom: 16px;
     }
@@ -47,7 +62,10 @@
   font-size: 96px;
   font-weight: 900;
   letter-spacing: 2px;
-  transition: opacity 0.3s ease;
+
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .yes { color: #15803d; }
@@ -114,6 +132,7 @@
 
     <div class="card">
       <div class="title">CAN WE PARK TODAY?</div>
+      <div id="todayLabel" class="today-label"></div>
       <div class="divider"></div>
       <div class="date-picker">
         <input type="date" id="dateInput"/>
@@ -153,13 +172,34 @@ function formatDate(d) {
 function today() {
   return formatDate(new Date());
 }
+  
+function setTodayLabel() {
+  const el = document.getElementById("todayLabel");
+  if (!el) return;
 
+  el.textContent =
+    "Today is " +
+    new Date().toLocaleDateString(undefined, {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric"
+    });
+}
+  
 function render(status, note) {
   const statusEl = document.getElementById("status");
   const noteEl = document.getElementById("note");
   const updatedEl = document.getElementById("updated");
 
+ statusEl.style.opacity = 0;
+statusEl.style.transform = "scale(0.95)";
+
+setTimeout(() => {
   statusEl.textContent = status;
+  statusEl.style.opacity = 1;
+  statusEl.style.transform = "scale(1)";
+}, 120);
 
   if (status === "YES") {
     statusEl.className = "status yes";
@@ -176,9 +216,32 @@ function render(status, note) {
 }
 
 function parse(csv) {
-  return csv.trim().split("\n").slice(1).map(row => {
+  const rows = [];
+  let current = "";
+  let inQuotes = false;
+
+  // Step 1: split into proper rows
+  for (let i = 0; i < csv.length; i++) {
+    const char = csv[i];
+
+    if (char === '"') {
+      inQuotes = !inQuotes;
+    }
+
+    if (char === '\n' && !inQuotes) {
+      rows.push(current);
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+
+  if (current) rows.push(current);
+
+  // Step 2: parse columns
+  return rows.slice(1).map(row => {
     const cols = [];
-    let current = "";
+    let value = "";
     let inQuotes = false;
 
     for (let i = 0; i < row.length; i++) {
@@ -187,14 +250,14 @@ function parse(csv) {
       if (char === '"') {
         inQuotes = !inQuotes;
       } else if (char === ',' && !inQuotes) {
-        cols.push(current);
-        current = "";
+        cols.push(value);
+        value = "";
       } else {
-        current += char;
+        value += char;
       }
     }
 
-    cols.push(current);
+    cols.push(value);
 
     const [date, parking, note, weather] = cols;
 
@@ -238,16 +301,41 @@ function toggleWeather() {
     el.style.opacity = "0";
   } else {
     el.style.maxHeight = el.scrollHeight + "px";
-    el.style.opacity = "1";
+
+    setTimeout(() => {
+      el.style.opacity = "1";
+    }, 50);
   }
 }
+  
 async function load() {
   try {
+    const cached = localStorage.getItem("parkingCSV");
+const cachedTime = localStorage.getItem("parkingCSVTime");
+const FIVE_MIN = 5 * 60 * 1000;
+
+if (cached && cachedTime && (Date.now() - cachedTime < FIVE_MIN)) {
+  cachedData = parse(cached);
+
+  const dateInput = document.getElementById("dateInput");
+  dateInput.value = today();
+  document.getElementById("todayLabel").textContent =
+  "Today is " + new Date().toLocaleDateString(undefined, {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric"
+  });
+  getForDate(dateInput.value);
+
+  console.log("Loaded from short-term cache");
+  return;
+}
     render(". . .", "");
 
     const res = await fetch(SHEET_URL);
     const csv = await res.text();
-
+    localStorage.setItem("parkingCSV", csv);
     cachedData = parse(csv);
 
     const dateInput = document.getElementById("dateInput");
@@ -260,10 +348,25 @@ async function load() {
     dateInput.addEventListener("change", (e) => {
       getForDate(e.target.value);
     });
-
-  } catch (e) {
+setTodayLabel();
+    
+} catch (e) {
   console.error(e);
-  // Do nothing — keep last known state
+
+  const cached = localStorage.getItem("parkingCSV");
+
+  if (cached) {
+    cachedData = parse(cached);
+
+    const dateInput = document.getElementById("dateInput");
+
+    dateInput.value = today();
+    getForDate(dateInput.value);
+    setTodayLabel();
+    console.log("Loaded from cache");
+  } else {
+    render("ERROR", "Could not load data.");
+  }
 }
 }
 load();
