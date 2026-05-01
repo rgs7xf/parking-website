@@ -47,15 +47,44 @@
   font-size: 96px;
   font-weight: 900;
   letter-spacing: 2px;
-
+  min-width: 220px;
+  text-align: center;
   opacity: 1;
   transform: scale(1);
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  filter: blur(0px);
+ transition: opacity 160ms ease, transform 160ms ease, color 0ms, filter 160ms ease;
+  will-change: transform, opacity, filter;
 }
 
 .yes { color: #15803d; }
 .no { color: #b91c1c; }
 
+   .status-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+
+#prevDayBtn,
+#nextDayBtn {
+  font-size: 28px;
+  font-weight: bold;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #888;
+  padding: 4px 8px;
+  transition: transform 0.1s ease, color 0.2s ease;
+  width: 40px;
+}
+
+#prevDayBtn:hover,
+#nextDayBtn:hover {
+  color: #111;
+  transform: scale(1.2);
+}
+    
     .divider {
   width: 60%;
   height: 1px;
@@ -122,7 +151,11 @@
         <input type="date" id="dateInput"/>
       </div>
 
-      <div id="status" class="status">...</div>
+      <div class="status-row">
+  <button id="prevDayBtn" onclick="prevDay()">‹</button>
+  <div id="status" class="status">...</div>
+  <button id="nextDayBtn" onclick="nextDay()">›</button>
+</div>
       <div id="note" class="note"></div>
       <div id="updated" class="updated"></div>
     </div>
@@ -156,6 +189,32 @@ function formatDate(d) {
 function today() {
   const d = new Date();
   return d.toLocaleDateString("en-CA"); // ISO-safe local format
+}
+function prevDay() {
+  const dateInput = document.getElementById("dateInput");
+
+  const current = new Date(dateInput.value);
+  current.setDate(current.getDate() - 1);
+
+  const newDate = current.toISOString().slice(0, 10);
+
+  dateInput.value = newDate;
+
+  updateTitle(newDate);
+  getForDate(newDate);
+}
+function nextDay() {
+  const dateInput = document.getElementById("dateInput");
+
+  const current = new Date(dateInput.value);
+  current.setDate(current.getDate() + 1);
+
+  const newDate = current.toISOString().slice(0, 10);
+
+  dateInput.value = newDate;
+
+  updateTitle(newDate);
+  getForDate(newDate);
 }
   
 function updateTitle(dateStr) {
@@ -192,13 +251,12 @@ function render(status, note) {
   const updatedEl = document.getElementById("updated");
 
  statusEl.style.opacity = 0;
-statusEl.style.transform = "scale(0.95)";
+statusEl.style.transform = "scale(0.98)";
+statusEl.style.filter = "blur(2px)";
 
 setTimeout(() => {
+  // 1. set text + class FIRST (while still hidden)
   statusEl.textContent = status;
-  statusEl.style.opacity = 1;
-  statusEl.style.transform = "scale(1)";
-}, 120);
 
   if (status === "YES") {
     statusEl.className = "status yes";
@@ -208,7 +266,17 @@ setTimeout(() => {
     document.body.style.background = "rgba(220, 38, 38, 0.08)";
   } else {
     statusEl.className = "status";
+    document.body.style.background = "#f4f4f5";
   }
+
+  // 2. force browser to apply class BEFORE fade-in
+  requestAnimationFrame(() => {
+    statusEl.style.opacity = 1;
+    statusEl.style.transform = "scale(1)";
+    statusEl.style.filter = "blur(0px)";
+  });
+
+}, 120);
 
   noteEl.textContent = note || "";
   updatedEl.textContent = "Last checked: " + new Date().toLocaleTimeString();
