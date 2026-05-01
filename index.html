@@ -222,7 +222,7 @@ function getForDate(dateStr) {
   render(match.parking, match.note);
 
   if (match.weather) {
-    weatherEl.textContent = match.weather;
+   weatherEl.innerHTML = match.weather.replace(/\n/g, "<br><br>");
   } else {
     weatherEl.textContent = "I haven't written the weather update yet!";
   }
